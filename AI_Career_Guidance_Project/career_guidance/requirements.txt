@@ -1,0 +1,8 @@
+# AI Career Guidance Expert System — Requirements
+# All packages listed below are part of Python's standard library
+# No external pip installation required.
+
+# Standard Library (pre-installed with Python 3.8+)
+tkinter       # GUI framework
+threading     # Background processing
+time          # Timing utilities

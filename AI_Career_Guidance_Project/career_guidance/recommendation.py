@@ -1,0 +1,149 @@
+"""
+==============================================================================
+Career Recommendation Module
+==============================================================================
+Description : Formats and structures the final career recommendations
+              for display in the GUI. Also generates detailed reports
+              and handles recommendation logic presentation.
+==============================================================================
+"""
+
+from knowledge_base import CAREERS
+
+
+# =============================================================================
+class CareerRecommendationModule:
+    """
+    Handles the presentation and formatting of career recommendations.
+    Works with the InferenceEngine output to produce user-friendly results.
+    """
+
+    # Medal emojis for top 3 ranks
+    RANK_LABELS = {1: "🥇 Best Match", 2: "🥈 Great Match", 3: "🥉 Good Match"}
+    RANK_COLORS = {1: "#FFD700", 2: "#C0C0C0", 3: "#CD7F32"}
+
+    # Career emoji icons
+    CAREER_ICONS = {
+        "Software Engineer":   "💻",
+        "Doctor":              "🩺",
+        "Teacher":             "📚",
+        "Lawyer":              "⚖️",
+        "Graphic Designer":    "🎨",
+        "Accountant":          "📊",
+        "Mechanical Engineer": "⚙️",
+    }
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def format_recommendation(rec: dict) -> dict:
+        """
+        Enrich a raw recommendation dict with display-friendly formatting.
+
+        Args:
+            rec (dict): Raw recommendation from InferenceEngine
+
+        Returns:
+            dict: Enriched recommendation with icons, colors, labels
+        """
+        rank = rec["rank"]
+        career = rec["career"]
+
+        return {
+            **rec,
+            "icon": CareerRecommendationModule.CAREER_ICONS.get(career, "🎯"),
+            "rank_label": CareerRecommendationModule.RANK_LABELS.get(rank, f"#{rank} Match"),
+            "rank_color": CareerRecommendationModule.RANK_COLORS.get(rank, "#888888"),
+            "match_bar": CareerRecommendationModule.build_match_bar(rec["match_percentage"]),
+            "primary_explanation": rec["explanations"][0] if rec["explanations"] else "",
+            "all_explanations": rec["explanations"],
+        }
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def build_match_bar(percentage: float, length: int = 20) -> str:
+        """
+        Build a simple ASCII progress bar for match percentage.
+
+        Args:
+            percentage (float): 0-100 match percentage
+            length (int):       Total bar length in characters
+
+        Returns:
+            str: ASCII bar like [████████████░░░░░░░░] 60%
+        """
+        filled = int((percentage / 100) * length)
+        empty = length - filled
+        bar = "█" * filled + "░" * empty
+        return f"[{bar}] {percentage}%"
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def generate_report_text(recommendations: list, user_answers: dict) -> str:
+        """
+        Generate a full plain-text career guidance report.
+
+        Args:
+            recommendations (list): List of formatted recommendation dicts
+            user_answers (dict):    The user's question answers
+
+        Returns:
+            str: Full report as a formatted string
+        """
+        lines = []
+        lines.append("=" * 60)
+        lines.append("   AI CAREER GUIDANCE EXPERT SYSTEM — REPORT")
+        lines.append("=" * 60)
+        lines.append("")
+        lines.append("🎯 CAREER RECOMMENDATIONS")
+        lines.append("-" * 60)
+
+        for rec in recommendations:
+            formatted = CareerRecommendationModule.format_recommendation(rec)
+            lines.append(f"\n{formatted['rank_label']}  {formatted['icon']} {formatted['career']}")
+            lines.append(f"   Match: {formatted['match_bar']}")
+            lines.append(f"   📌 {formatted['description']}")
+            lines.append(f"   🎓 Education: {formatted['education']}")
+            lines.append(f"   💰 Salary:    {formatted['salary_range']}")
+            lines.append(f"   📈 Growth:    {formatted['growth']}")
+            lines.append(f"   🔍 Why this career?")
+            for exp in formatted["all_explanations"]:
+                lines.append(f"      → {exp}")
+
+        lines.append("")
+        lines.append("=" * 60)
+        lines.append("   KEY SKILLS TO DEVELOP")
+        lines.append("-" * 60)
+
+        if recommendations:
+            top_career = recommendations[0]["career"]
+            career_info = CAREERS.get(top_career, {})
+            skills = career_info.get("skills_needed", [])
+            for skill in skills:
+                lines.append(f"   ✅ {skill}")
+
+        lines.append("")
+        lines.append("=" * 60)
+        lines.append("  Generated by AI Career Guidance Expert System v1.0")
+        lines.append("=" * 60)
+
+        return "\n".join(lines)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_career_details(career_name: str) -> dict:
+        """
+        Retrieve full details for a specific career from the knowledge base.
+
+        Args:
+            career_name (str): Name of the career
+
+        Returns:
+            dict: Career information or empty dict if not found
+        """
+        return CAREERS.get(career_name, {})
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_all_careers() -> list:
+        """Return a list of all available career names."""
+        return list(CAREERS.keys())
